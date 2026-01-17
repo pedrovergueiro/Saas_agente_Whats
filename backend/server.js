@@ -1,4 +1,4 @@
-// SERVIDOR SAAS PARA FLY.IO - BACKEND SEPARADO
+// SERVIDOR SAAS PARA RENDER - BACKEND SEPARADO
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -17,7 +17,8 @@ app.use(cors({
         'http://localhost:3000',
         'https://barberbot-frontend.vercel.app',
         'https://barberbot-frontend-*.vercel.app',
-        /https:\/\/.*\.vercel\.app$/
+        /https:\/\/.*\.vercel\.app$/,
+        /https:\/\/.*\.onrender\.com$/
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -48,7 +49,16 @@ function createWhatsAppClient(botId) {
         }),
         puppeteer: {
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-gpu'
+            ]
         }
     });
 
@@ -504,21 +514,21 @@ app.get('/health', (req, res) => {
         status: 'ok',
         whatsapp_clients: whatsappClients.size,
         timestamp: new Date().toISOString(),
-        platform: 'fly.io'
+        platform: 'render'
     });
 });
 
 // ============================================
-// INICIAR SERVIDOR PARA FLY.IO
+// INICIAR SERVIDOR PARA RENDER
 // ============================================
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 
 // Inicializar banco e servidor
 initDatabase().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
         console.log('🚀 ============================================');
-        console.log('🚀 BARBERBOT AI SAAS - FLY.IO DEPLOYMENT');
+        console.log('🚀 BARBERBOT AI SAAS - RENDER DEPLOYMENT');
         console.log(`🚀 Servidor: http://0.0.0.0:${PORT}`);
         console.log('🚀 ============================================');
         console.log('👤 Login: pedro@teste.com / teste123');

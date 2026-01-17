@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'https://barberbot-backend.fly.dev';
+    const backendUrl = process.env.BACKEND_URL || 'https://barberbot-backend.onrender.com';
     
     return [
       {
