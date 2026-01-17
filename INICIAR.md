@@ -1,0 +1,1 @@
+# INICIAR SISTEMA - BarberBot AI SaaS

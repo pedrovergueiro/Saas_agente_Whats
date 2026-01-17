@@ -1,0 +1,62 @@
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
+import Head from 'next/head';
+import Link from 'next/link';
+import { ArrowLeft, MessageSquare, Search } from 'lucide-react';
+
+export default function Messages() {
+  const router = useRouter();
+
+  return (
+    <>
+      <Head>
+        <title>Mensagens - Dashboard</title>
+      </Head>
+
+      <div className="min-h-screen bg-gray-50 p-8">
+        <div className="max-w-7xl mx-auto">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span>Voltar ao Dashboard</span>
+          </Link>
+
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Mensagens</h1>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-8">
+            <h2 className="text-lg font-semibold text-blue-900 mb-2">🚧 Em Desenvolvimento</h2>
+            <p className="text-blue-700">
+              Esta página está em desenvolvimento. Em breve você terá acesso a:
+            </p>
+            <ul className="mt-4 space-y-2 text-blue-700">
+              <li>💬 Histórico completo de conversas</li>
+              <li>🔍 Busca por cliente ou conteúdo</li>
+              <li>📊 Estatísticas de mensagens</li>
+              <li>⚡ Respostas rápidas</li>
+              <li>🤖 Mensagens automáticas</li>
+              <li>📎 Anexos e mídias</li>
+            </ul>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center space-x-4 mb-6">
+              <Search className="h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar mensagens..."
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                disabled
+              />
+            </div>
+            <div className="text-center py-12">
+              <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-600">Nenhuma mensagem ainda</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

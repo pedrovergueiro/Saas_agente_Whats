@@ -1,0 +1,28 @@
+{
+  "name": "barberbot-ai-saas",
+  "version": "1.0.0",
+  "description": "BarberBot AI SaaS - WhatsApp Bot Platform",
+  "main": "backend/api/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "node build.js",
+    "start": "cd frontend && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install"
+  },
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "saas",
+    "barber",
+    "ai",
+    "nextjs",
+    "nodejs"
+  ],
+  "author": "Seu Nome",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}
