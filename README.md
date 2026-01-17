@@ -25,7 +25,7 @@ Uma plataforma SaaS completa para criar e gerenciar bots de WhatsApp com foco em
 ### Backend
 - **Node.js** - Runtime
 - **Express** - Framework web
-- **SQLite** - Banco de dados
+- **MongoDB** - Banco de dados (Atlas)
 - **WhatsApp Web.js** - Integração WhatsApp
 - **JWT** - Autenticação
 - **bcryptjs** - Hash de senhas
@@ -45,6 +45,7 @@ Uma plataforma SaaS completa para criar e gerenciar bots de WhatsApp com foco em
 NODE_ENV=production
 JWT_SECRET=4d710d2f8de3134bc8517f7f2f54012dec9e9c41c7c23b27edd95b17c17b7af25ecd1b681e878207294d575e5785c8a6f6f5f64aaca4fbf8c983c7810db5ba28
 VERCEL=1
+MONGODB_URI=mongodb+srv://pedrolvergueiro_db_user:5yoTGgxNSlf1C0us@cluster0.1u7u6q2.mongodb.net/barberbot?retryWrites=true&w=majority
 ```
 
 ## 💻 Desenvolvimento Local
@@ -126,7 +127,8 @@ JWT_SECRET=seu_jwt_secret_aqui
 
 #### Frontend (.env.local)
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_API_URL=/api
+MONGODB_URI=mongodb+srv://pedrolvergueiro_db_user:5yoTGgxNSlf1C0us@cluster0.1u7u6q2.mongodb.net/barberbot?retryWrites=true&w=majority
 ```
 
 ## 📱 Como Usar
