@@ -1,4 +1,4 @@
-// SERVIDOR SAAS COM QR CODE QUE FUNCIONA!
+// SERVIDOR SAAS PARA VERCEL - BACKEND SEPARADO
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -8,17 +8,22 @@ const { v4: uuidv4 } = require('uuid');
 const { query, run, initDatabase } = require('./config/database-mongodb');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
-const crypto = require('crypto');
 
 const app = express();
+
+// CORS configurado para aceitar frontend
 app.use(cors({
     origin: [
         'http://localhost:3000',
         'https://barberbot-frontend.vercel.app',
-        'https://barberbot-frontend-*.vercel.app'
+        'https://barberbot-frontend-*.vercel.app',
+        /https:\/\/.*\.vercel\.app$/
     ],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'seu_secret_super_seguro_mude_isso';
@@ -149,16 +154,6 @@ app.post('/api/auth/login', async (req, res) => {
         if (!isValid) {
             return res.status(401).json({ success: false, message: 'Email ou senha incorretos' });
         }
-
-        // Verificar se o email foi verificado (removido - cadastro direto)
-        // if (!user.email_verified) {
-        //     return res.status(403).json({ 
-        //         success: false, 
-        //         message: 'Email não verificado. Verifique sua caixa de entrada.',
-        //         code: 'EMAIL_NOT_VERIFIED',
-        //         email: user.email
-        //     });
-        // }
         
         // Atualizar último login
         await run('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
@@ -174,7 +169,7 @@ app.post('/api/auth/login', async (req, res) => {
                     full_name: user.full_name,
                     plan_type: user.plan_type,
                     status: user.status,
-                    email_verified: true // Sempre true agora
+                    email_verified: true
                 },
                 token
             }
@@ -195,18 +190,16 @@ app.get('/api/auth/me', authenticate, async (req, res) => {
                 full_name: req.user.full_name,
                 plan_type: req.user.plan_type,
                 status: req.user.status,
-                email_verified: true // Sempre true agora
+                email_verified: true
             }
         }
     });
 });
 
-// Rota para cadastro simples (sem verificação de email)
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { email, password, full_name, phone, company_name } = req.body;
 
-        // Validações básicas
         if (!email || !password || !full_name) {
             return res.status(400).json({ 
                 success: false, 
@@ -221,7 +214,6 @@ app.post('/api/auth/register', async (req, res) => {
             });
         }
 
-        // Verificar se email já existe
         const existingUser = await query('SELECT id FROM users WHERE email = ?', [email]);
         if (existingUser.rows.length > 0) {
             return res.status(409).json({ 
@@ -230,11 +222,9 @@ app.post('/api/auth/register', async (req, res) => {
             });
         }
 
-        // Hash da senha
         const passwordHash = await bcrypt.hash(password, 12);
-
-        // Criar usuário diretamente ativo
         const userId = uuidv4();
+        
         await run(`
             INSERT INTO users (
                 id, email, password_hash, full_name, phone, company_name,
@@ -242,7 +232,6 @@ app.post('/api/auth/register', async (req, res) => {
             ) VALUES (?, ?, ?, ?, ?, ?, 'active', TRUE)
         `, [userId, email, passwordHash, full_name, phone, company_name]);
 
-        // Gerar token JWT
         const token = jwt.sign({ userId: userId, email: email }, JWT_SECRET, { expiresIn: '7d' });
 
         res.status(201).json({
@@ -348,7 +337,6 @@ app.put('/api/bots/:botId', authenticate, async (req, res) => {
     }
 });
 
-// QR Code - USANDO O CÓDIGO QUE FUNCIONA!
 app.get('/api/bots/:botId/qr', authenticate, async (req, res) => {
     try {
         const result = await query('SELECT * FROM bots WHERE id = ? AND user_id = ?', [req.params.botId, req.user.id]);
@@ -360,7 +348,6 @@ app.get('/api/bots/:botId/qr', authenticate, async (req, res) => {
         const botId = req.params.botId;
         const status = whatsappStatus.get(botId) || 'disconnected';
 
-        // Se conectado
         if (status === 'connected') {
             return res.json({
                 success: true,
@@ -371,7 +358,6 @@ app.get('/api/bots/:botId/qr', authenticate, async (req, res) => {
             });
         }
 
-        // Se tem QR Code
         if (whatsappQRCodes.has(botId)) {
             const qr = whatsappQRCodes.get(botId);
             return res.json({
@@ -383,7 +369,6 @@ app.get('/api/bots/:botId/qr', authenticate, async (req, res) => {
             });
         }
 
-        // Se está inicializando
         if (status === 'initializing') {
             return res.json({
                 success: true,
@@ -394,7 +379,6 @@ app.get('/api/bots/:botId/qr', authenticate, async (req, res) => {
             });
         }
 
-        // Se não tem cliente, criar
         if (!whatsappClients.has(botId)) {
             createWhatsAppClient(botId);
             return res.json({
@@ -523,34 +507,10 @@ app.get('/health', (req, res) => {
     });
 });
 
-// ============================================
-// INICIAR SERVIDOR
-// ============================================
+// Inicializar banco para Vercel
+initDatabase().catch(err => {
+    console.error('❌ Erro ao inicializar banco:', err);
+});
 
-const PORT = process.env.PORT || 5000;
-
-// Para produção (Vercel), inicializar banco sem listen
-if (process.env.VERCEL) {
-    console.log('🔧 Modo Vercel - Inicializando banco...');
-    initDatabase().catch(err => {
-        console.error('❌ Erro ao inicializar banco:', err);
-    });
-} else {
-    // Para Railway ou desenvolvimento local
-    initDatabase().then(() => {
-        app.listen(PORT, () => {
-            console.log('🚀 ============================================');
-            console.log('🚀 SAAS COM QR CODE - RAILWAY DEPLOYMENT');
-            console.log(`🚀 Servidor: http://localhost:${PORT}`);
-            console.log('🚀 ============================================');
-            console.log('👤 Login: pedro@teste.com / teste123');
-            console.log('🚀 ============================================');
-        });
-    }).catch(err => {
-        console.error('❌ Erro:', err);
-        process.exit(1);
-    });
-}
-
-// Exportar app para Vercel e Railway
+// Exportar para Vercel
 module.exports = app;
