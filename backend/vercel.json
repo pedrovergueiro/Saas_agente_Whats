@@ -18,10 +18,5 @@
       "src": "/health",
       "dest": "server.js"
     }
-  ],
-  "functions": {
-    "server.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
