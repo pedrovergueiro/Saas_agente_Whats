@@ -7,11 +7,130 @@ const DB_NAME = 'barberbot';
 let client;
 let db;
 let isConnecting = false;
+let usingSQLite = false;
+let sqliteDb = null;
 
-// Conectar ao MongoDB com configuração otimizada para Render
+// Fallback para SQLite se MongoDB falhar
+const initSQLiteFallback = async () => {
+    console.log('🔄 Iniciando fallback para SQLite...');
+    const sqlite3 = require('sqlite3').verbose();
+    const path = require('path');
+    const fs = require('fs');
+    
+    // Criar diretório de dados
+    const dataDir = path.join(__dirname, '../data');
+    if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    const dbPath = path.join(dataDir, 'saas.db');
+    console.log('📦 Banco SQLite em:', dbPath);
+    
+    sqliteDb = new sqlite3.Database(dbPath);
+    usingSQLite = true;
+    
+    // Inicializar tabelas SQLite
+    await initSQLiteTables();
+    
+    console.log('✅ SQLite inicializado como fallback');
+    return true;
+};
+
+const initSQLiteTables = async () => {
+    const runSQLite = (sql, params = []) => {
+        return new Promise((resolve, reject) => {
+            sqliteDb.run(sql, params, function(err) {
+                if (err) reject(err);
+                else resolve({ lastID: this.lastID, changes: this.changes });
+            });
+        });
+    };
+    
+    // Tabela de usuários
+    await runSQLite(`
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            phone TEXT,
+            company_name TEXT,
+            plan_type TEXT DEFAULT 'basic',
+            status TEXT DEFAULT 'active',
+            email_verified BOOLEAN DEFAULT TRUE,
+            trial_ends_at TEXT,
+            subscription_ends_at TEXT,
+            max_bots INTEGER DEFAULT 1,
+            max_messages_month INTEGER DEFAULT 500,
+            messages_used_month INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            last_login_at TEXT
+        )
+    `);
+    
+    // Tabela de bots
+    await runSQLite(`
+        CREATE TABLE IF NOT EXISTS bots (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            whatsapp_number TEXT,
+            status TEXT DEFAULT 'disconnected',
+            qr_code TEXT,
+            qr_generated_at TEXT,
+            connected_at TEXT,
+            last_activity_at TEXT,
+            business_name TEXT,
+            business_address TEXT,
+            business_phone TEXT,
+            business_type TEXT DEFAULT 'barber',
+            open_time TEXT DEFAULT '08:00',
+            close_time TEXT DEFAULT '18:00',
+            work_days TEXT DEFAULT '1,2,3,4,5,6',
+            ai_enabled INTEGER DEFAULT 1,
+            ai_personality TEXT DEFAULT 'friendly',
+            auto_responses INTEGER DEFAULT 1,
+            total_messages INTEGER DEFAULT 0,
+            total_appointments INTEGER DEFAULT 0,
+            total_revenue REAL DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    `);
+    
+    // Criar usuário de teste
+    const bcrypt = require('bcryptjs');
+    const testPassword = await bcrypt.hash('teste123', 10);
+    
+    try {
+        await runSQLite(`
+            INSERT OR IGNORE INTO users (
+                id, email, password_hash, full_name, 
+                plan_type, status, email_verified, max_bots, max_messages_month
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            'test-user-123',
+            'pedro@teste.com',
+            testPassword,
+            'Pedro Teste',
+            'premium',
+            'active',
+            true,
+            999,
+            999999
+        ]);
+        console.log('✅ Usuário de teste SQLite criado: pedro@teste.com / teste123');
+    } catch (err) {
+        // Usuário já existe
+    }
+};
+
+// Conectar ao MongoDB com fallback para SQLite
 const connectDB = async () => {
-    if (db) {
-        return db;
+    if (db || usingSQLite) {
+        return db || sqliteDb;
     }
     
     if (isConnecting) {
@@ -19,24 +138,23 @@ const connectDB = async () => {
         while (isConnecting) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
-        return db;
+        return db || sqliteDb;
     }
     
     isConnecting = true;
     
     try {
-        console.log('🔌 Conectando ao MongoDB...');
+        console.log('🔌 Tentando conectar ao MongoDB...');
         console.log('📍 URI:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
         
-        // Configuração otimizada para Render - sem SSL explícito
+        // Configuração otimizada para Render - timeout muito menor para fallback rápido
         const clientOptions = {
-            maxPoolSize: 5,
-            serverSelectionTimeoutMS: 8000,
-            socketTimeoutMS: 20000,
-            connectTimeoutMS: 8000,
+            maxPoolSize: 3,
+            serverSelectionTimeoutMS: 3000, // 3 segundos apenas
+            socketTimeoutMS: 5000,
+            connectTimeoutMS: 3000,
             retryWrites: true,
             w: 'majority',
-            // Não especificar SSL - deixar MongoDB decidir
         };
         
         client = new MongoClient(MONGODB_URI, clientOptions);
@@ -51,9 +169,23 @@ const connectDB = async () => {
         isConnecting = false;
         return db;
     } catch (error) {
+        console.log('❌ MongoDB falhou:', error.message);
+        console.log('🔄 Usando SQLite como fallback...');
+        
+        // Limpar cliente MongoDB
+        if (client) {
+            try {
+                await client.close();
+            } catch (closeError) {
+                // Ignorar erro de fechamento
+            }
+            client = null;
+        }
+        
+        // Inicializar SQLite
+        await initSQLiteFallback();
         isConnecting = false;
-        console.error('❌ Erro ao conectar MongoDB:', error.message);
-        throw error;
+        return sqliteDb;
     }
 };
 
@@ -62,6 +194,20 @@ const query = async (sql, params = []) => {
     try {
         const database = await connectDB();
         
+        // Se estiver usando SQLite
+        if (usingSQLite) {
+            return new Promise((resolve, reject) => {
+                sqliteDb.all(sql, params, (err, rows) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ rows, rowCount: rows.length });
+                    }
+                });
+            });
+        }
+        
+        // Código MongoDB existente
         if (sql.includes('SELECT * FROM users WHERE email = ?')) {
             const email = params[0];
             console.log('🔍 Buscando usuário por email:', email);
@@ -106,6 +252,20 @@ const run = async (sql, params = []) => {
     try {
         const database = await connectDB();
         
+        // Se estiver usando SQLite
+        if (usingSQLite) {
+            return new Promise((resolve, reject) => {
+                sqliteDb.run(sql, params, function(err) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ lastID: this.lastID, changes: this.changes });
+                    }
+                });
+            });
+        }
+        
+        // Código MongoDB existente
         if (sql.includes('INSERT INTO users')) {
             const [id, email, password_hash, full_name, phone, company_name] = params;
             console.log('➕ Inserindo usuário:', email);
@@ -255,11 +415,23 @@ const run = async (sql, params = []) => {
 };
 
 const initDatabase = async () => {
-    console.log('📦 Inicializando MongoDB...');
+    console.log('📦 Inicializando banco de dados...');
     
     try {
         const database = await connectDB();
         
+        if (usingSQLite) {
+            console.log('✅ SQLite inicializado com fallback!');
+            
+            // Estatísticas SQLite
+            const userResult = await query('SELECT COUNT(*) as count FROM users');
+            const botResult = await query('SELECT COUNT(*) as count FROM bots');
+            console.log(`👥 Usuários: ${userResult.rows[0].count}`);
+            console.log(`🤖 Bots: ${botResult.rows[0].count}`);
+            return;
+        }
+        
+        // Código MongoDB existente
         // Criar índices
         try {
             await database.collection('users').createIndex({ email: 1 }, { unique: true });
@@ -311,7 +483,7 @@ const initDatabase = async () => {
         console.log(`🤖 Bots: ${botCount}`);
         
     } catch (error) {
-        console.error('❌ Erro ao inicializar MongoDB:', error);
+        console.error('❌ Erro ao inicializar banco:', error);
         throw error;
     }
 };
