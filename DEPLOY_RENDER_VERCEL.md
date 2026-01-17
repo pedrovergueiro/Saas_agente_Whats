@@ -19,7 +19,7 @@ Branch: main
 Root Directory: backend
 Runtime: Node
 Build Command: npm install
-Start Command: npm start
+Start Command: node server.js
 ```
 
 ### **1.3 Configurar Variáveis de Ambiente**
@@ -27,6 +27,7 @@ Na seção **Environment Variables**, adicione:
 
 ```env
 NODE_ENV=production
+PORT=10000
 JWT_SECRET=4d710d2f8de3134bc8517f7f2f54012dec9e9c41c7c23b27edd95b17c17b7af25ecd1b681e878207294d575e5785c8a6f6f5f64aaca4fbf8c983c7810db5ba28
 MONGODB_URI=mongodb+srv://pedrolvergueiro_db_user:5yoTGgxNSlf1C0us@cluster0.1u7u6q2.mongodb.net/barberbot?retryWrites=true&w=majority
 ```
@@ -88,6 +89,24 @@ https://barberbot-frontend.vercel.app
 
 ---
 
+## 🔧 **CORREÇÕES APLICADAS**
+
+### **✅ SSL MongoDB Corrigido:**
+- Removido conflito entre `ssl: true` e `tlsAllowInvalidCertificates`
+- Configuração SSL otimizada para Render
+- URI do MongoDB limpa sem parâmetros SSL conflitantes
+
+### **✅ Backend Otimizado:**
+- Configuração CORS para aceitar Vercel
+- Puppeteer otimizado para Render
+- Start command correto: `node server.js`
+
+### **✅ Frontend Configurado:**
+- Proxy correto para backend Render
+- Variáveis de ambiente atualizadas
+
+---
+
 ## 🎯 **VANTAGENS RENDER + VERCEL**
 
 ### **✅ Render (Backend):**
@@ -129,8 +148,8 @@ https://barberbot-frontend.vercel.app
 - **Upgrade para pago** resolve
 
 ### **MongoDB não conecta:**
-- Verificar MONGODB_URI
-- Verificar IP liberado no Atlas
+- ✅ **CORRIGIDO:** SSL configurado corretamente
+- Verificar IP liberado no Atlas (0.0.0.0/0)
 
 ### **Frontend não conecta:**
 - Verificar BACKEND_URL no Vercel
@@ -153,7 +172,9 @@ https://barberbot-frontend.vercel.app
 2. **Mantenha ativo** fazendo ping no health check
 3. **Upgrade para pago** se precisar de performance
 4. **Logs no Render** são muito bons para debug
+5. **SSL MongoDB** agora configurado corretamente
 
 ---
 
 **🚀 RENDER É MUITO MAIS SIMPLES QUE FLY.IO!**
+**✅ PROBLEMAS SSL MONGODB RESOLVIDOS!**
