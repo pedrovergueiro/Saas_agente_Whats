@@ -34,6 +34,12 @@ Uma plataforma SaaS completa para criar e gerenciar bots de WhatsApp com foco em
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/pedrovergueiro/Saas_agente_Whats)
 
+### Configuração no Vercel:
+- **Framework**: Next.js (detectado automaticamente)
+- **Root Directory**: `frontend`
+- **Build Command**: `npm run build` (automático)
+- **Output Directory**: `.next` (automático)
+
 ### Variáveis de Ambiente no Vercel:
 ```
 NODE_ENV=production
