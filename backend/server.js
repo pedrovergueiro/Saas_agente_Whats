@@ -1,4 +1,4 @@
-// SERVIDOR SAAS PARA VERCEL - BACKEND SEPARADO
+// SERVIDOR SAAS PARA FLY.IO - BACKEND SEPARADO
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -11,7 +11,7 @@ const qrcode = require('qrcode');
 
 const app = express();
 
-// CORS configurado para aceitar frontend
+// CORS configurado para aceitar frontend Vercel
 app.use(cors({
     origin: [
         'http://localhost:3000',
@@ -503,14 +503,31 @@ app.get('/health', (req, res) => {
     res.json({
         status: 'ok',
         whatsapp_clients: whatsappClients.size,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        platform: 'fly.io'
     });
 });
 
-// Inicializar banco para Vercel
-initDatabase().catch(err => {
-    console.error('❌ Erro ao inicializar banco:', err);
+// ============================================
+// INICIAR SERVIDOR PARA FLY.IO
+// ============================================
+
+const PORT = process.env.PORT || 8080;
+
+// Inicializar banco e servidor
+initDatabase().then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log('🚀 ============================================');
+        console.log('🚀 BARBERBOT AI SAAS - FLY.IO DEPLOYMENT');
+        console.log(`🚀 Servidor: http://0.0.0.0:${PORT}`);
+        console.log('🚀 ============================================');
+        console.log('👤 Login: pedro@teste.com / teste123');
+        console.log('🚀 ============================================');
+    });
+}).catch(err => {
+    console.error('❌ Erro ao inicializar:', err);
+    process.exit(1);
 });
 
-// Exportar para Vercel
+// Exportar app
 module.exports = app;
