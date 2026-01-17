@@ -3,10 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   async rewrites() {
+    const backendUrl = process.env.BACKEND_URL || 'https://barberbot-backend.vercel.app';
+    
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.BACKEND_URL || 'https://barberbot-backend.vercel.app'}/api/:path*`
+        destination: `${backendUrl}/api/:path*`
       }
     ]
   }
