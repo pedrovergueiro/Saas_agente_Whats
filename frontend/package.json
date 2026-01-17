@@ -21,7 +21,11 @@
     "lucide-react": "^0.303.0",
     "@headlessui/react": "^1.7.17",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.2.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.7",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",
