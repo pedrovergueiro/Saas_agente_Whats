@@ -32,6 +32,10 @@ const connectDB = async () => {
             maxPoolSize: 10,
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
+            ssl: true,
+            sslValidate: false,
+            tlsAllowInvalidCertificates: true,
+            tlsAllowInvalidHostnames: true
         });
         
         await client.connect();
