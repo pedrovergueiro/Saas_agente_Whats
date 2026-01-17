@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 
 // Configuração do MongoDB
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://pedrolvergueiro_db_user:5yoTGgxNSlf1C0us@cluster0.1u7u6q2.mongodb.net/barberbot?retryWrites=true&w=majority';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://pedrolvergueiro_db_user:5yoTGgxNSlf1C0us@cluster0.1u7u6q2.mongodb.net/barberbot?retryWrites=true&w=majority&ssl=true&tlsAllowInvalidCertificates=true';
 const DB_NAME = 'barberbot';
 
 let client;
@@ -28,14 +28,21 @@ const connectDB = async () => {
         console.log('🔌 Conectando ao MongoDB...');
         console.log('📍 URI:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
         
-        client = new MongoClient(MONGODB_URI, {
+        // Configuração SSL mais permissiva para Render
+        const clientOptions = {
             maxPoolSize: 10,
-            serverSelectionTimeoutMS: 10000,
+            serverSelectionTimeoutMS: 15000,
             socketTimeoutMS: 45000,
+            connectTimeoutMS: 15000,
             ssl: true,
             tls: true,
-            tlsAllowInvalidCertificates: false
-        });
+            tlsAllowInvalidCertificates: true,
+            tlsInsecure: false,
+            retryWrites: true,
+            w: 'majority'
+        };
+        
+        client = new MongoClient(MONGODB_URI, clientOptions);
         
         await client.connect();
         db = client.db(DB_NAME);
