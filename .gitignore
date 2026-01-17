@@ -62,6 +62,3 @@ Thumbs.db
 # WhatsApp sessions
 .wwebjs_auth/
 .wwebjs_cache/
-
-# Test files
-test-*.js
