@@ -33,9 +33,7 @@ const connectDB = async () => {
             serverSelectionTimeoutMS: 5000,
             socketTimeoutMS: 45000,
             ssl: true,
-            sslValidate: false,
-            tlsAllowInvalidCertificates: true,
-            tlsAllowInvalidHostnames: true
+            tlsAllowInvalidCertificates: true
         });
         
         await client.connect();
