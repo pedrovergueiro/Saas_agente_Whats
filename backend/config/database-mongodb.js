@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 
-// Configuração do MongoDB
+// Configuração do MongoDB - URI otimizada para Render
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://pedrolvergueiro_db_user:5yoTGgxNSlf1C0us@cluster0.1u7u6q2.mongodb.net/barberbot?retryWrites=true&w=majority';
 const DB_NAME = 'barberbot';
 
@@ -8,7 +8,7 @@ let client;
 let db;
 let isConnecting = false;
 
-// Conectar ao MongoDB com retry
+// Conectar ao MongoDB com configuração otimizada para Render
 const connectDB = async () => {
     if (db) {
         return db;
@@ -28,16 +28,15 @@ const connectDB = async () => {
         console.log('🔌 Conectando ao MongoDB...');
         console.log('📍 URI:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@'));
         
-        // Configuração SSL otimizada para Render
+        // Configuração otimizada para Render - sem SSL explícito
         const clientOptions = {
-            maxPoolSize: 10,
-            serverSelectionTimeoutMS: 15000,
-            socketTimeoutMS: 45000,
-            connectTimeoutMS: 15000,
-            tls: true,
-            tlsAllowInvalidCertificates: true,
+            maxPoolSize: 5,
+            serverSelectionTimeoutMS: 8000,
+            socketTimeoutMS: 20000,
+            connectTimeoutMS: 8000,
             retryWrites: true,
-            w: 'majority'
+            w: 'majority',
+            // Não especificar SSL - deixar MongoDB decidir
         };
         
         client = new MongoClient(MONGODB_URI, clientOptions);
@@ -53,7 +52,7 @@ const connectDB = async () => {
         return db;
     } catch (error) {
         isConnecting = false;
-        console.error('❌ Erro ao conectar MongoDB:', error);
+        console.error('❌ Erro ao conectar MongoDB:', error.message);
         throw error;
     }
 };
