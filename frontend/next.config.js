@@ -2,13 +2,12 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // Configuração para Vercel - backend e frontend juntos
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'https://barberbot-backend.onrender.com';
-    
     return [
       {
         source: '/api/:path*',
-        destination: `${backendUrl}/api/:path*`
+        destination: '/api/:path*' // API routes do próprio Next.js
       }
     ]
   }
