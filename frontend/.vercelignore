@@ -1,8 +1,5 @@
-backend/
-docs/
-tests/
-*.md
-.env
-.env.local
+# Arquivos específicos do frontend para ignorar
 node_modules/
 .next/
+.env.local
+*.log
