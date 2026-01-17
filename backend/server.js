@@ -5,7 +5,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
-const { query, run, initDatabase } = require('./config/database-vercel');
+const { query, run, initDatabase } = require('./config/database-mongodb');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const crypto = require('crypto');
@@ -522,28 +522,20 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Para desenvolvimento local
-if (process.env.NODE_ENV !== 'production') {
-    initDatabase().then(() => {
-        app.listen(PORT, () => {
-            console.log('🚀 ============================================');
-            console.log('🚀 SAAS COM QR CODE QUE FUNCIONA!');
-            console.log(`🚀 Servidor: http://localhost:${PORT}`);
-            console.log('🚀 ============================================');
-            console.log('👤 Login: pedro@teste.com / teste123');
-            console.log('🌐 Frontend: http://localhost:3000');
-            console.log('🚀 ============================================');
-        });
-    }).catch(err => {
-        console.error('❌ Erro:', err);
-        process.exit(1);
+// Para produção (Railway), sempre inicializar banco e listen
+initDatabase().then(() => {
+    app.listen(PORT, () => {
+        console.log('🚀 ============================================');
+        console.log('🚀 SAAS COM QR CODE - RAILWAY DEPLOYMENT');
+        console.log(`🚀 Servidor: http://localhost:${PORT}`);
+        console.log('🚀 ============================================');
+        console.log('👤 Login: pedro@teste.com / teste123');
+        console.log('🚀 ============================================');
     });
-} else {
-    // Para produção (Vercel), inicializar banco sem listen
-    initDatabase().catch(err => {
-        console.error('❌ Erro ao inicializar banco:', err);
-    });
-}
+}).catch(err => {
+    console.error('❌ Erro:', err);
+    process.exit(1);
+});
 
-// Exportar app para Vercel
+// Exportar app para Railway
 module.exports = app;

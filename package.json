@@ -1,0 +1,13 @@
+{
+  "name": "barberbot-ai-saas-railway",
+  "version": "1.0.0",
+  "description": "BarberBot AI SaaS - Railway Deployment",
+  "main": "start-railway.js",
+  "scripts": {
+    "start": "node start-railway.js",
+    "build": "node build-railway.js"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
