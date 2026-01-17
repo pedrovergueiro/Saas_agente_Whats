@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://barberbot-backend-gd6zone7o-pedrovergueiros-projects-02d02ff2.vercel.app/api",
+    "NODE_ENV": "production"
+  }
+}
